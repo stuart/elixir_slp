@@ -2,7 +2,7 @@ defmodule SLP.Server do
   use GenServer
   require Logger
 
-  @commands [{:register, 1},{:deregister, 2},{:find_services, 3}]
+  @commands [{:register, 1},{:deregister, 2},{:find_services, 3},{:find_attributes, 4}]
 
   def start_link(options) do
     GenServer.start_link(__MODULE__, :ok, options)
@@ -32,7 +32,7 @@ defmodule SLP.Server do
   end
 
   defp handle_response <<"ok: ", response::binary>> do
-    {:ok, String.rstrip(response) |> String.split("\n")}
+    {:ok, String.rstrip(response) |> String.split(["\n"])}
   end
 
   defp handle_response <<"error: ", errcode::binary>> do

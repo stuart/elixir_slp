@@ -15,6 +15,8 @@
 #define COMMAND_FIND_SERVICES 3
 #define COMMAND_FIND_ATTRIBUTES 4
 
+#define DEBUG 1
+
 #if defined(DEBUG) && DEBUG > 0
  #define DEBUG_PRINT(fmt, ...) fprintf(stderr, "%s:%d:%s(): " fmt, \
     __FILE__, __LINE__, __func__, __VA_ARGS__)
@@ -25,14 +27,14 @@
 int read_command(char *buf);
 int write_command(char *buf, int length);
 
-void SLPEXRegReport(SLPHandle hslp __attribute__ ((unused)), SLPError errcode, void* cookie){
+void RegReport(SLPHandle hslp __attribute__ ((unused)), SLPError errcode, void* cookie){
     *(SLPError*)cookie = errcode;
 }
 
-SLPBoolean SLPEXURLCallback(SLPHandle hslp __attribute__ ((unused)),
-                            const char* service_url,
-                            unsigned short lifetime __attribute__ ((unused)),
-                            SLPError err, void* urls){
+SLPBoolean URLCallback(SLPHandle hslp __attribute__ ((unused)),
+                      const char* service_url,
+                      unsigned short lifetime __attribute__ ((unused)),
+                      SLPError err, void* urls){
   if(err == SLP_OK || err == SLP_LAST_CALL){
     DEBUG_PRINT("Service URL     = %s\n",service_url);
     DEBUG_PRINT("Service Timeout = %i\n",lifetime);
@@ -45,6 +47,22 @@ SLPBoolean SLPEXURLCallback(SLPHandle hslp __attribute__ ((unused)),
   else
   {
     *(SLPError*)urls = err;
+  }
+
+  return SLP_TRUE;
+}
+
+SLPBoolean attrCallback(SLPHandle hslp, const char* attrlist, SLPError err, void* attributes){
+  DEBUG_PRINT("err = %d\n", err);
+  if(err == SLP_OK || err == SLP_LAST_CALL){
+    DEBUG_PRINT("Attributes = %s\n", attrlist);
+    if(attrlist != NULL && strlen(attributes) + strlen(attrlist) + 6 < BUFFER_SIZE){
+      strncat(attributes, attrlist, strlen(attrlist));
+      strncat(attributes, "\n", 1);
+    }
+  }
+  else{
+    *(SLPError*)attributes = err;
   }
 
   return SLP_TRUE;
@@ -68,7 +86,7 @@ SLPBoolean reg(SLPHandle hslp, char* buffer){
     0,
     attributes,
     SLP_TRUE,
-    SLPEXRegReport,
+    RegReport,
     &callbackerr);
 
   if(err != SLP_OK){
@@ -94,7 +112,7 @@ SLPBoolean deregister(SLPHandle hslp, char* buffer){
   err = SLPDereg(
     hslp,
     service_url,
-    SLPEXRegReport,
+    RegReport,
     &callbackerr);
 
   if(err != SLP_OK){
@@ -131,12 +149,44 @@ SLPBoolean find_services(SLPHandle hslp, char* buffer){
     service_type,
     scope_list,
     filter,
-    SLPEXURLCallback,
+    URLCallback,
     urls);
 
   sprintf(buffer, "ok: ");
   strncat(buffer, urls, strlen(urls));
   free(urls);
+  return err;
+}
+
+SLPBoolean find_attributes(SLPHandle hslp, char* buffer){
+  SLPError err;
+  char* service_url;
+  char* scope_list;
+  char* attrids;
+  char* attributes;
+
+  if((attributes = (char *)calloc(BUFFER_SIZE, 1)) == NULL){
+    fprintf(stderr, "Out of memory error.\n");
+    exit(1);
+  }
+
+  service_url = buffer + strlen((char *)buffer) + 1;
+  attrids = service_url + strlen(service_url) + 1;
+  scope_list = attrids + strlen(attrids) + 1;
+
+  err = SLPFindAttrs(
+    hslp,
+    service_url,
+    scope_list,
+    attrids,
+    attrCallback,
+    attributes );
+
+  DEBUG_PRINT("Find Attributes %s\n", attrids);
+
+  sprintf(buffer, "ok: ");
+  strncat(buffer, attributes, strlen(attributes));
+  free(attributes);
   return err;
 }
 
@@ -169,6 +219,9 @@ int main()
           break;
         case COMMAND_FIND_SERVICES :
           find_services(hslp, buffer);
+          break;
+        case COMMAND_FIND_ATTRIBUTES :
+          find_attributes(hslp, buffer);
           break;
         default :
           DEBUG_PRINT("Unknown command: %i\n", buffer[0]);

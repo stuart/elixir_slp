@@ -68,6 +68,7 @@ defmodule SLP do
       * filter : An LDAPv3 search filter to apply to the search. Omit this to include all results.
 
     ## Examples
+
       iex> SLP.register "foo.bar:http://127.0.0.1:3003"
       ...> SLP.register "foo.bar:http://127.0.0.1:3004"
       ...> SLP.find_services "foo.bar"
@@ -75,6 +76,24 @@ defmodule SLP do
   """
   def find_services service_type, scope_list \\[], filter \\"" do
     GenServer.call(:slp_port, {:find_services, [service_type, convert_scopes(scope_list), filter]}, timeout)
+  end
+
+  @doc ~S"""
+    ## Examples
+
+      iex> SLP.register "foo.bar:http://127.0.0..1:3005", [foo: "bar", bar: "baz"]
+      iex> SLP.find_attributes "foo.bar:http://127.0.0..1:3005", [:foo, :bar]
+      {:ok, [foo: "bar", bar: "baz"]}
+      iex> SLP.deregister "foo.bar:http://127.0.0..1:3005"
+      :ok
+
+  """
+  def find_attributes service_url, attributes \\ [], scope_list \\ [] do
+    result = GenServer.call(:slp_port, {:find_attributes, [service_url, convert_scopes(attributes), convert_scopes(scope_list)]}, timeout)
+    case result do
+      {:ok, attrs} -> {:ok, deconvert_attributes(attrs)}
+      r -> r
+    end
   end
 
   defp timeout do
@@ -85,6 +104,20 @@ defmodule SLP do
   defp convert_attributes attrs do
     Enum.map(attrs, fn({k,v}) -> <<"(",to_string(k)::binary,"=",to_string(v)::binary, ")">> end)
       |> Enum.join(",")
+  end
+
+  defp deconvert_attributes [], result do
+    result
+  end
+
+  defp deconvert_attributes [line | rest ], result \\ [] do
+    attr_list = String.split(line, ",") |> Enum.map(fn(attr) -> deconvert_attribute(attr) end)
+    deconvert_attributes(rest, attr_list ++ result)
+  end
+
+  defp deconvert_attribute attr do
+    ["", k, v, ""] = String.split(attr, ["(", "=", ")"])
+    {String.to_atom(k), v}
   end
 
   defp convert_scopes scopelist do
