@@ -79,6 +79,15 @@ defmodule SLP do
   end
 
   @doc ~S"""
+
+    Returns the attributes set on a registered service.
+
+    ## Parameters
+
+    * service_url : string which must conform to the SLP Service url format.
+    * attributes : A list of attributes to return.
+    * scope_list  : A list of scopes to search.
+
     ## Examples
 
       iex> SLP.register "foo.bar:http://127.0.0..1:3005", [foo: "bar", bar: "baz"]

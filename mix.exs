@@ -3,7 +3,7 @@ defmodule Slpex.Mixfile do
 
   def project do
     [app: :slp,
-     version: "0.0.1",
+     version: "0.0.2",
      elixir: "~> 1.1",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -33,7 +33,7 @@ defmodule Slpex.Mixfile do
 
   defp package do
     [ maintainers: ["Stuart Coyle"],
-      links: ["https://github.com/stuart/elixir_slp"],
+      links: %{"Github" => "https://github.com/stuart/elixir_slp"},
       licenses: ["MIT"],
       files: ["src","lib","mix.exs", "Makefile", "LICENCE*", "README*"]]
   end
