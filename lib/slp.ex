@@ -53,7 +53,7 @@ defmodule SLP do
         {:error, "Invalid Registration"}
 
   """
-  @spec register(binary) :: slp_response
+  @spec deregister(binary) :: slp_response
   def deregister service_url do
     GenServer.call :slp_port, {:deregister, [service_url]}, timeout
   end
@@ -74,6 +74,7 @@ defmodule SLP do
       ...> SLP.find_services "foo.bar"
       {:ok, ["foo.bar:http://127.0.0.1:3003","foo.bar:http://127.0.0.1:3004"]}
   """
+  @spec find_services(binary, [binary], binary) :: slp_response
   def find_services service_type, scope_list \\[], filter \\"" do
     GenServer.call(:slp_port, {:find_services, [service_type, convert_scopes(scope_list), filter]}, timeout)
   end
@@ -91,12 +92,13 @@ defmodule SLP do
     ## Examples
 
       iex> SLP.register "foo.bar:http://127.0.0..1:3005", [foo: "bar", bar: "baz"]
-      iex> SLP.find_attributes "foo.bar:http://127.0.0..1:3005", [:foo, :bar]
+      ...> SLP.find_attributes "foo.bar:http://127.0.0..1:3005", [:foo, :bar]
       {:ok, [foo: "bar", bar: "baz"]}
       iex> SLP.deregister "foo.bar:http://127.0.0..1:3005"
       :ok
 
   """
+  @spec find_attributes(binary, [key: binary], [binary]) :: slp_response
   def find_attributes service_url, attributes \\ [], scope_list \\ [] do
     result = GenServer.call(:slp_port, {:find_attributes, [service_url, convert_scopes(attributes), convert_scopes(scope_list)]}, timeout)
     case result do
@@ -115,11 +117,16 @@ defmodule SLP do
       |> Enum.join(",")
   end
 
+
+  defp deconvert_attributes attributes do
+    deconvert_attributes attributes, []
+  end
+
   defp deconvert_attributes [], result do
     result
   end
 
-  defp deconvert_attributes [line | rest ], result \\ [] do
+  defp deconvert_attributes [line | rest ], result do
     attr_list = String.split(line, ",") |> Enum.map(fn(attr) -> deconvert_attribute(attr) end)
     deconvert_attributes(rest, attr_list ++ result)
   end

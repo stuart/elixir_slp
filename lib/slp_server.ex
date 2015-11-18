@@ -12,7 +12,6 @@ defmodule SLP.Server do
     Logger.info "Starting SLP Port"
     Process.flag(:trap_exit, true)
     port = Port.open({:spawn, "#{:code.priv_dir(:slp)}/slp_port"}, [{:packet, 2}, :binary])
-
     {:ok, port}
   end
 

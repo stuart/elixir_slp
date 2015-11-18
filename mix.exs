@@ -35,7 +35,7 @@ defmodule Slpex.Mixfile do
     [ maintainers: ["Stuart Coyle"],
       links: %{"Github" => "https://github.com/stuart/elixir_slp"},
       licenses: ["MIT"],
-      files: ["src","lib","mix.exs", "Makefile", "LICENCE*", "README*"]]
+      files: ["inc", "src", "lib", "mix.exs", "Makefile", "LICENCE*", "README*"]]
   end
 
   defp description do

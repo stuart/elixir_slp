@@ -1,8 +1,18 @@
 MKDIR_P = mkdir -p
-CFLAGS= -g -O3 -pedantic -Wall -Wextra
-LFLAGS= -lslp
+
+ifeq (${MIX_ENV},prod)
+	DEBUG_FLAG=0
+else
+	DEBUG_FLAG=1
+endif
+
+INC_DIR=inc/
 SRC_DIR=src/
 PRIV_DIR=priv/
+
+CFLAGS= -g -O3 -pedantic -Wall -Wextra -I ${INC_DIR} -D DEBUG=${DEBUG_FLAG}
+LFLAGS= -lslp
+
 OBJECTS=${PRIV_DIR}slp_port
 
 .PHONY: directories
