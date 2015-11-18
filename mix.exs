@@ -8,8 +8,10 @@ defmodule Slpex.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      name: "SLP",
-     source_url: "https://github.com/stuart/slpex",
-     homepage_url: "http://github.com/stuart/slpex",
+     description: description,
+     package: package,
+     source_url: "https://github.com/stuart/elixir_slp",
+     homepage_url: "http://github.com/stuart/elixir_slp",
      compilers: [:make, :elixir, :app],
      aliases: aliases,
      deps: deps]
@@ -27,6 +29,20 @@ defmodule Slpex.Mixfile do
 
   defp aliases do
     [clean: ["clean", "clean.make"]]
+  end
+
+  defp package do
+    [ maintainers: ["Stuart Coyle"],
+      links: ["https://github.com/stuart/elixir_slp"],
+      licenses: ["MIT"],
+      files: ["src","lib","mix.exs", "Makefile", "LICENCE*", "README*"]]
+  end
+
+  defp description do
+    """
+    An Elixir application for using the Service Location Protocol.
+    SLP is a commonly used service discovery protocol.
+    """
   end
 end
 
